@@ -24,46 +24,46 @@ public class PlayerLink {
     public PlayerLink(UUID playerId, long discordId) {
         this.playerId = playerId;
         this.discordId = discordId;
-        alts = new ArrayList<>();
+        this.alts = new ArrayList<>();
     }
 
     public UUID getPlayerId() {
-        return playerId;
+        return this.playerId;
     }
 
     public String getPlayerName() {
-        return Utils.getPlayerName(playerId);
+        return Utils.getPlayerName(this.playerId);
     }
 
     public long getDiscordId() {
-        return discordId;
+        return this.discordId;
     }
 
     public void addAlt(PlayerData data) {
-        alts.add(data);
-        dataObj.updatePlayerLink(this);
+        this.alts.add(data);
+        this.dataObj.updatePlayerLink(this);
     }
 
     public void removeAlt(UUID uuid) {
-        alts.removeIf(data -> data.getId().equals(uuid));
-        dataObj.updatePlayerLink(this);
+        this.alts.removeIf(data -> data.getId().equals(uuid));
+        this.dataObj.updatePlayerLink(this);
     }
 
     public void removeAlt(PlayerData data) {
-        alts.remove(data);
-        dataObj.updatePlayerLink(this);
+        this.alts.remove(data);
+        this.dataObj.updatePlayerLink(this);
     }
 
     public boolean hasAlt(UUID uuid) {
-        return alts.stream().map(PlayerData::getId).anyMatch(uuid::equals);
+        return this.alts.stream().map(PlayerData::getId).anyMatch(uuid::equals);
     }
 
     public int altCount() {
-        return alts.size();
+        return this.alts.size();
     }
 
     public ImmutableList<PlayerData> getAlts() {
-        return ImmutableList.copyOf(alts);
+        return ImmutableList.copyOf(this.alts);
     }
 
     public void setDataObj(LinkData dataObj) {
@@ -73,10 +73,10 @@ public class PlayerLink {
     @Override
     public String toString() {
         return "PlayerLink{" +
-                "playerId=" + playerId +
-                ", discordId=" + discordId +
-                ", alts=" + alts +
-                ", dataObj=" + dataObj +
+                "playerId=" + this.playerId +
+                ", discordId=" + this.discordId +
+                ", alts=" + this.alts +
+                ", dataObj=" + this.dataObj +
                 '}';
     }
 }

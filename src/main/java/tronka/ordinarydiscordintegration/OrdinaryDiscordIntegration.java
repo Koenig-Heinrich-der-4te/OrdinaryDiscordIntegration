@@ -45,10 +45,10 @@ public class OrdinaryDiscordIntegration extends ListenerAdapter implements Dedic
     @Override
     public void onInitializeServer() {
         instance = this;
-        if (config.botToken == null || config.botToken.length() < 20) {
+        if (this.config.botToken == null || this.config.botToken.length() < 20) {
             throw new RuntimeException("Please enter a valid bot token in the odi config file");
         }
-        ServerLifecycleEvents.SERVER_STARTING.register(s -> server = s);
+        ServerLifecycleEvents.SERVER_STARTING.register(s -> this.server = s);
         ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStopped);
         Thread jdaThread = new Thread(this::startJDA);
         new InGameDiscordCommand(this);
@@ -56,13 +56,13 @@ public class OrdinaryDiscordIntegration extends ListenerAdapter implements Dedic
     }
 
     private void startJDA() {
-        jda = JDABuilder.createLight(config.botToken, GatewayIntent.GUILD_MESSAGES,GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
+        this.jda = JDABuilder.createLight(this.config.botToken, GatewayIntent.GUILD_MESSAGES,GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(this).build();
     }
 
     private void onServerStopped(MinecraftServer server) {
-        jda.shutdownNow();
+        this.jda.shutdownNow();
     }
 
     @Override
@@ -72,21 +72,21 @@ public class OrdinaryDiscordIntegration extends ListenerAdapter implements Dedic
             throw new RuntimeException(reloadResult);
         }
 
-        jda.addEventListener(new DiscordCommandHandler(this));
-        jda.addEventListener(chatBridge = new ChatBridge(this));
-        jda.addEventListener(consoleBridge = new ConsoleBridge(this));
-        jda.addEventListener(linkManager = new LinkManager(this));
-        jda.addEventListener(timeoutManager = new TimeoutManager(this));
-        luckPermsIntegration = new LuckPermsIntegration(this);
-        vanishIntegration = new VanishIntegration(this);
+        this.jda.addEventListener(new DiscordCommandHandler(this));
+        this.jda.addEventListener(this.chatBridge = new ChatBridge(this));
+        this.jda.addEventListener(this.consoleBridge = new ConsoleBridge(this));
+        this.jda.addEventListener(this.linkManager = new LinkManager(this));
+        this.jda.addEventListener(this.timeoutManager = new TimeoutManager(this));
+        this.luckPermsIntegration = new LuckPermsIntegration(this);
+        this.vanishIntegration = new VanishIntegration(this);
         registerConfigReloadHandler(this::onConfigReloaded);
     }
 
     private void onConfigReloaded(Config config) {
         // bring all members into cache
-        guild.loadMembers().onSuccess(members -> {
+        this.guild.loadMembers().onSuccess(members -> {
             setReady();
-            linkManager.unlinkPlayers(members);
+            this.linkManager.unlinkPlayers(members);
         }).onError(t -> {
             LOGGER.error("Unable to load members", t);
             setReady();
@@ -94,15 +94,15 @@ public class OrdinaryDiscordIntegration extends ListenerAdapter implements Dedic
     }
 
     private void setReady() {
-        ready = true;
+        this.ready = true;
     }
 
     public boolean isReady() {
-        return ready;
+        return this.ready;
     }
 
     public JDA getJda() {
-        return jda;
+        return this.jda;
     }
 
     public static OrdinaryDiscordIntegration getInstance() {
@@ -110,63 +110,63 @@ public class OrdinaryDiscordIntegration extends ListenerAdapter implements Dedic
     }
 
     public Config getConfig() {
-        return config;
+        return this.config;
     }
 
     public MinecraftServer getServer() {
-        return server;
+        return this.server;
     }
 
     public Guild getGuild() {
-        return guild;
+        return this.guild;
     }
 
     public ConsoleBridge getConsoleBridge() {
-        return consoleBridge;
+        return this.consoleBridge;
     }
 
     public ChatBridge getChatBridge() {
-        return chatBridge;
+        return this.chatBridge;
     }
 
     public LinkManager getLinkManager() {
-        return linkManager;
+        return this.linkManager;
     }
 
     public LuckPermsIntegration getLuckPermsIntegration() {
-        return luckPermsIntegration;
+        return this.luckPermsIntegration;
     }
 
     public VanishIntegration getVanishIntegration() {
-        return vanishIntegration;
+        return this.vanishIntegration;
     }
 
     public TimeoutManager getTimeoutManager() {
-        return timeoutManager;
+        return this.timeoutManager;
     }
 
     public String tryReloadConfig() {
         LOGGER.info("Reloading Config...");
         Config newConfig = Config.loadConfig();
-        TextChannel serverChatChannel = Utils.getTextChannel(jda, newConfig.serverChatChannel);
+        TextChannel serverChatChannel = Utils.getTextChannel(this.jda, newConfig.serverChatChannel);
         if (serverChatChannel == null) {
             return "Fail to load config: Please enter a valid serverChatChannelId";
         }
 
 
-        guild = serverChatChannel.getGuild();
-        config = newConfig;
+        this.guild = serverChatChannel.getGuild();
+        this.config = newConfig;
 
-        for (Consumer<Config> handler : configReloadHandlers) {
-            handler.accept(config);
+        for (Consumer<Config> handler : this.configReloadHandlers) {
+            handler.accept(this.config);
         }
         LOGGER.info("Config successfully reloaded!");
         return "";
     }
 
     public void registerConfigReloadHandler(Consumer<Config> handler) {
-        configReloadHandlers.add(handler);
-        handler.accept(config);
+        this.configReloadHandlers.add(handler);
+        handler.accept(this.config);
     }
 
     public static Path getConfigFolder() {

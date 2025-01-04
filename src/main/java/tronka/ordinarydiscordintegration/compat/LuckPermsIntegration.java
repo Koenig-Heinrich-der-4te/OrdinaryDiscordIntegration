@@ -21,20 +21,20 @@ public class LuckPermsIntegration {
         if (!integration.getConfig().integrations.enableLuckPermsIntegration) { return; }
         if (!FabricLoader.getInstance().isModLoaded("luckperms")) { return; }
         try {
-            luckPerms = LuckPermsProvider.get();
-            loaded = true;
+            this.luckPerms = LuckPermsProvider.get();
+            this.loaded = true;
         } catch (Exception ignored) {
             LOGGER.error("Luck-perms not loaded, disabling integration");
         }
     }
 
     public void setAlt(UUID uuid) {
-        if (!loaded) { return; }
-        luckPerms.getUserManager().loadUser(uuid).thenAccept(user -> {
-            for (String group : integration.getConfig().integrations.luckPerms.altGroups) {
+        if (!this.loaded) { return; }
+        this.luckPerms.getUserManager().loadUser(uuid).thenAccept(user -> {
+            for (String group : this.integration.getConfig().integrations.luckPerms.altGroups) {
                 user.data().add(LuckPermsHelper.getNode(group));
             }
-            luckPerms.getUserManager().saveUser(user);
+            this.luckPerms.getUserManager().saveUser(user);
         });
     }
 }

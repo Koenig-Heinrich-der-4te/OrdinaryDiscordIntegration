@@ -25,42 +25,42 @@ public class JsonLinkData implements LinkData {
     private JsonLinkData(File file) {
         this.file = file;
         if (!file.exists()) {
-            links = new ArrayList<>();
+            this.links = new ArrayList<>();
             return;
         }
         try (FileReader reader = new FileReader(file)) {
-            links = gson.fromJson(reader, new TypeToken<ArrayList<PlayerLink>>() { });
+            this.links = gson.fromJson(reader, new TypeToken<ArrayList<PlayerLink>>() { });
         } catch (Exception e) {
             throw new RuntimeException("Cannot load player links (%s)".formatted(file.getAbsolutePath()), e);
         }
-        if (links == null) {
+        if (this.links == null) {
             // gson failed to parse a valid list
-            links = new ArrayList<>();
+            this.links = new ArrayList<>();
         }
-        links.forEach(link -> link.setDataObj(this));
-        System.out.println("Loaded " + links.size() + " player links");
+        this.links.forEach(link -> link.setDataObj(this));
+        System.out.println("Loaded " + this.links.size() + " player links");
     }
 
     @Override
     public Optional<PlayerLink> getPlayerLink(UUID playerId) {
-        return links.stream().filter(link -> playerId.equals(link.getPlayerId()) || link.hasAlt(playerId)).findFirst();
+        return this.links.stream().filter(link -> playerId.equals(link.getPlayerId()) || link.hasAlt(playerId)).findFirst();
     }
 
     @Override
     public Optional<PlayerLink> getPlayerLink(long discordId) {
-        return links.stream().filter(link -> discordId == link.getDiscordId()).findFirst();
+        return this.links.stream().filter(link -> discordId == link.getDiscordId()).findFirst();
     }
 
     @Override
     public void addPlayerLink(PlayerLink playerLink) {
-        links.add(playerLink);
+        this.links.add(playerLink);
         playerLink.setDataObj(this);
         onUpdated();
     }
 
     @Override
     public void removePlayerLink(PlayerLink playerLink) {
-        links.remove(playerLink);
+        this.links.remove(playerLink);
         onUpdated();
     }
 
@@ -70,10 +70,10 @@ public class JsonLinkData implements LinkData {
     }
 
     private void onUpdated() {
-        try (FileWriter writer = new FileWriter(file)) {
-            gson.toJson(links, writer);
+        try (FileWriter writer = new FileWriter(this.file)) {
+            gson.toJson(this.links, writer);
         } catch (IOException e) {
-            LOGGER.error("Failed to save link data to file {}", file.getAbsolutePath(), e);
+            LOGGER.error("Failed to save link data to file {}", this.file.getAbsolutePath(), e);
         }
     }
 
@@ -83,6 +83,6 @@ public class JsonLinkData implements LinkData {
 
     @Override
     public Stream<PlayerLink> getPlayerLinks() {
-        return links.stream();
+        return this.links.stream();
     }
 }

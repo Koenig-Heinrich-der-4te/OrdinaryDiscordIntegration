@@ -25,10 +25,10 @@ public class InGameDiscordCommand {
         dispatcher.register(CommandManager.literal("discord").then(CommandManager.literal("unlink").executes(context -> {
             ServerPlayerEntity player = context.getSource().getPlayer();
             if (player != null) {
-                integration.getLinkManager().unlinkPlayer(player.getUuid());
+                this.integration.getLinkManager().unlinkPlayer(player.getUuid());
                 context.getSource().sendFeedback(() -> Text.literal("Unlinked!"), false);
-                if (integration.getConfig().joining.enableLinking) {
-                    player.networkHandler.disconnect(Text.literal(integration.getConfig().kickMessages.kickUnlinked));
+                if (this.integration.getConfig().joining.enableLinking) {
+                    player.networkHandler.disconnect(Text.literal(this.integration.getConfig().kickMessages.kickUnlinked));
                 }
             } else {
                 context.getSource().sendFeedback(() -> Text.literal("Player Only!"), false);
@@ -38,11 +38,11 @@ public class InGameDiscordCommand {
             Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
             int kickedCount = 0;
             for (GameProfile profile : profiles) {
-                integration.getLinkManager().unlinkPlayer(profile.getId());
+                this.integration.getLinkManager().unlinkPlayer(profile.getId());
                 ServerPlayerEntity player = context.getSource().getServer().getPlayerManager().getPlayer(profile.getId());
                 if (player != null) {
-                    if (integration.getConfig().joining.enableLinking) {
-                        player.networkHandler.disconnect(Text.literal(integration.getConfig().kickMessages.kickUnlinked));
+                    if (this.integration.getConfig().joining.enableLinking) {
+                        player.networkHandler.disconnect(Text.literal(this.integration.getConfig().kickMessages.kickUnlinked));
                     }
                     kickedCount++;
                 }
@@ -51,7 +51,7 @@ public class InGameDiscordCommand {
             context.getSource().sendFeedback(() -> Text.literal("Successfully unlinked %d player and kicked %d".formatted(profiles.size(), finalKickedCount)), false);
             return 1;
         }))).then(CommandManager.literal("reload").requires(source -> source.hasPermissionLevel(2)).executes(context -> {
-            String result = integration.tryReloadConfig();
+            String result = this.integration.tryReloadConfig();
             final String feedback = result.isEmpty() ? "Successfully reloaded config!" : result;
             context.getSource().sendFeedback(() -> Text.literal(feedback), result.isEmpty());
             return 1;

@@ -17,11 +17,11 @@ public class PlayerData {
     }
 
     public UUID getId() {
-        return id;
+        return this.id;
     }
 
     public String getName() {
-        return Utils.getPlayerName(id);
+        return Utils.getPlayerName(this.id);
     }
 
     public static PlayerData from(LinkRequest linkRequest) {

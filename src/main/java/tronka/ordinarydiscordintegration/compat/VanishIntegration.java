@@ -14,8 +14,8 @@ public class VanishIntegration {
         if (!integration.getConfig().integrations.enableVanishIntegration) {
             return;
         }
-        loaded = FabricLoader.getInstance().isModLoaded("melius-vanish");
-        if (!loaded) {
+        this.loaded = FabricLoader.getInstance().isModLoaded("melius-vanish");
+        if (!this.loaded) {
             return;
         }
         VanishEvents.VANISH_EVENT.register((player, isVanished) -> {
@@ -28,6 +28,6 @@ public class VanishIntegration {
     }
 
     public boolean isVanished(ServerPlayerEntity player) {
-        return loaded && VanishAPI.isVanished(player);
+        return this.loaded && VanishAPI.isVanished(player);
     }
 }

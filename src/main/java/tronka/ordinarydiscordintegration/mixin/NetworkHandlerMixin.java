@@ -16,8 +16,8 @@ public class NetworkHandlerMixin {
 
     @Inject(method = "onDisconnected", at = @At("HEAD"))
     private void onPlayerLeave(DisconnectionInfo info, CallbackInfo ci) {
-        if (!OrdinaryDiscordIntegration.getInstance().getVanishIntegration().isVanished(player)) {
-            OrdinaryDiscordIntegration.getInstance().getChatBridge().onPlayerLeave(player);
+        if (!OrdinaryDiscordIntegration.getInstance().getVanishIntegration().isVanished(this.player)) {
+            OrdinaryDiscordIntegration.getInstance().getChatBridge().onPlayerLeave(this.player);
         }
     }
 }

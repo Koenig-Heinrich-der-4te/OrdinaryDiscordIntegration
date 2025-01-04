@@ -15,22 +15,22 @@ public class DiscordCommandSender extends ServerCommandSource {
     private final String sender;
     public DiscordCommandSender(MinecraftServer server, String sender, Consumer<String> feedback) {
         super(CommandOutput.DUMMY, Vec3d.ZERO, Vec2f.ZERO, server.getOverworld(), 4, "OrdinaryDiscordIntegration", Text.of("Ordinary Discord Integration"), server, null);
-        feedbackConsumer = feedback;
+        this.feedbackConsumer = feedback;
         this.sender = sender;
     }
 
     @Override
     public void sendFeedback(Supplier<Text> feedbackSupplier, boolean broadcastToOps) {
         String message = feedbackSupplier.get().getString();
-        feedbackConsumer.accept(message);
+        this.feedbackConsumer.accept(message);
     }
 
     @Override
     public void sendError(Text message) {
-        feedbackConsumer.accept(message.getString());
+        this.feedbackConsumer.accept(message.getString());
     }
 
     public String getSender() {
-        return sender;
+        return this.sender;
     }
 }

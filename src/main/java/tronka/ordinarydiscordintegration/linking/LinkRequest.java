@@ -14,12 +14,12 @@ public class LinkRequest {
     }
 
     public UUID getPlayerId() {
-        return playerId;
+        return this.playerId;
     }
     public String getName() {
-        return name;
+        return this.name;
     }
     public boolean isExpired() {
-        return expiresAt < System.currentTimeMillis();
+        return this.expiresAt < System.currentTimeMillis();
     }
 }

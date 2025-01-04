@@ -27,18 +27,18 @@ public class ConsoleBridge extends ListenerAdapter {
     }
 
     private void onConfigLoaded(Config config) {
-        channel = Utils.getTextChannel(integration.getJda(), config.commands.consoleChannel);
-        String opRoleId =  integration.getConfig().commands.opRole;
-        if (channel != null && !opRoleId.isEmpty()) {
-            opRole = channel.getGuild().getRoleById(opRoleId);
+        this.channel = Utils.getTextChannel(this.integration.getJda(), config.commands.consoleChannel);
+        String opRoleId = this.integration.getConfig().commands.opRole;
+        if (this.channel != null && !opRoleId.isEmpty()) {
+            this.opRole = this.channel.getGuild().getRoleById(opRoleId);
         } else {
-            opRole = null;
+            this.opRole = null;
         }
-        logRedirects = new ArrayList<>();
+        this.logRedirects = new ArrayList<>();
         for (Config.LogRedirectChannel logRedirectChannel : config.commands.logRedirectChannels) {
-            TextChannel channel = Utils.getTextChannel(integration.getJda(), logRedirectChannel.channel);
+            TextChannel channel = Utils.getTextChannel(this.integration.getJda(), logRedirectChannel.channel);
             if (channel != null) {
-                logRedirects.add(new LogRedirect(channel, logRedirectChannel.redirectPrefixes));
+                this.logRedirects.add(new LogRedirect(channel, logRedirectChannel.redirectPrefixes));
             } else {
                 LogUtils.getLogger().info("Could not load log redirect: ID: \"{}\", redirects: [{}]", logRedirectChannel.channel, String.join(", ", logRedirectChannel.redirectPrefixes));
             }
@@ -46,29 +46,29 @@ public class ConsoleBridge extends ListenerAdapter {
     }
 
     public void onCommandExecute(ServerCommandSource source, String command){
-        if (channel == null) {
+        if (this.channel == null) {
             return;
         }
-        if (!integration.getConfig().commands.logCommandsInConsole) {
-            return;
-        }
-
-        if (source.getEntity() == null && !source.getName().equals("Server") && !integration.getConfig().commands.logCommandBlockCommands) {
+        if (!this.integration.getConfig().commands.logCommandsInConsole) {
             return;
         }
 
-        if (Utils.startsWithAny(command, integration.getConfig().commands.ignoredCommands)) {
+        if (source.getEntity() == null && !source.getName().equals("Server") && !this.integration.getConfig().commands.logCommandBlockCommands) {
             return;
         }
-        TextChannel target = channel;
-        for (LogRedirect redirect : logRedirects) {
+
+        if (Utils.startsWithAny(command, this.integration.getConfig().commands.ignoredCommands)) {
+            return;
+        }
+        TextChannel target = this.channel;
+        for (LogRedirect redirect : this.logRedirects) {
             if (Utils.startsWithAny(command, redirect.prefixes)) {
                 target = redirect.channel;
                 break;
             }
         }
         target.sendMessage(
-                integration.getConfig().messages.commandExecutedInfoText
+                this.integration.getConfig().messages.commandExecutedInfoText
                         .replace("%user%", source.getName())
                         .replace("%msg%", command)
         ).queue();
@@ -76,33 +76,33 @@ public class ConsoleBridge extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (event.getChannel() != channel || event.getMember() == null) {
+        if (event.getChannel() != this.channel || event.getMember() == null) {
             return;
         }
 
         String message = event.getMessage().getContentStripped();
-        if (!message.startsWith(integration.getConfig().commands.commandPrefix)) {
+        if (!message.startsWith(this.integration.getConfig().commands.commandPrefix)) {
             return;
         }
 
-        if (!PermissionUtil.checkPermission(event.getMember(), Permission.ADMINISTRATOR) && !event.getMember().getRoles().contains(opRole)) {
+        if (!PermissionUtil.checkPermission(event.getMember(), Permission.ADMINISTRATOR) && !event.getMember().getRoles().contains(this.opRole)) {
             event.getChannel().sendMessage("You don't have permission to use this command").queue();
             return;
         }
-        message = message.substring(integration.getConfig().commands.commandPrefix.length());
+        message = message.substring(this.integration.getConfig().commands.commandPrefix.length());
         if (message.equals("help")) {
             EmbedBuilder embed = new EmbedBuilder();
-            integration.getConfig().commands.commands.forEach(command -> embed.addField(command.commandName, command.inGameAction.replace("%args%", "<args>"), true));
+            this.integration.getConfig().commands.commands.forEach(command -> embed.addField(command.commandName, command.inGameAction.replace("%args%", "<args>"), true));
             event.getChannel().sendMessageEmbeds(embed.build()).queue();
             return;
         }
         String[] commandParts = message.split(" ", 2);
         String commandName = commandParts[0].toLowerCase();
         String commandArgs = commandParts.length == 2 ? commandParts[1] : "";
-        Optional<Config.BridgeCommand> commandOptional = integration.getConfig().commands.commands.stream().filter(cmd -> cmd.commandName.equals(commandName)).findFirst();
+        Optional<Config.BridgeCommand> commandOptional = this.integration.getConfig().commands.commands.stream().filter(cmd -> cmd.commandName.equals(commandName)).findFirst();
         if (commandOptional.isPresent()) {
             Config.BridgeCommand command = commandOptional.get();
-            DiscordCommandSender commandSender = new DiscordCommandSender(integration.getServer(), event.getAuthor().getAsMention(), feedback -> {
+            DiscordCommandSender commandSender = new DiscordCommandSender(this.integration.getServer(), event.getAuthor().getAsMention(), feedback -> {
                 if (feedback.length() > 2000) {
                     feedback = feedback.substring(0, 2000);
                 }
@@ -110,7 +110,7 @@ public class ConsoleBridge extends ListenerAdapter {
             });
             String inGameCommand = command.inGameAction.replace("%args%", commandArgs);
             try {
-                integration.getServer().getCommandManager().getDispatcher().execute(inGameCommand, commandSender);
+                this.integration.getServer().getCommandManager().getDispatcher().execute(inGameCommand, commandSender);
             } catch (CommandSyntaxException e) {
                 throw new RuntimeException(e);
             }

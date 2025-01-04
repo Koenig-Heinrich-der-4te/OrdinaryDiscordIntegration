@@ -20,7 +20,7 @@ public class AdvancementMixin {
         Advancement advancement = advancementEntry.value();
 
         if (advancement != null && advancement.display().isPresent() && advancement.display().get().shouldAnnounceToChat()) {
-            OrdinaryDiscordIntegration.getInstance().getChatBridge().onReceiveAdvancement(owner, advancement.display().get());
+            OrdinaryDiscordIntegration.getInstance().getChatBridge().onReceiveAdvancement(this.owner, advancement.display().get());
         }
     }
 }

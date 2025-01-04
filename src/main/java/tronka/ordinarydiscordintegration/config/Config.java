@@ -24,6 +24,7 @@ public class Config {
     public JoinOptions joining = new JoinOptions();
 
     public boolean stackMessages = false;
+    public int stackMessagesTimeoutInSec = 60;
 
     public boolean broadCastDeathMessages = true;
     public boolean announceAdvancements = true;

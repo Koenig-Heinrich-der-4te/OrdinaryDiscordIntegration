@@ -28,6 +28,15 @@ public class Config {
     @TomlComment("After how many seconds of no messages, a new message should be sent")
     public int stackMessagesTimeoutInSec = 60;
 
+    @TomlComment("Format shared waypoints")
+    public boolean formatWaypoints = true;
+    @TomlComment({"Base URL of online map (this will add a hyperlink for overworld waypoints)",
+                    "keep empty if none, example formatting:",
+                    "https://map.example.com/#world:%x%:%y%:%z%:500:0:0:0:0:perspective",
+                    "Placeholders: ",
+                    "%x%, %y%, %z%: coordinates"})
+    public String waypointURL = "";
+
     @TomlComment("Send death messages to discord")
     public boolean broadCastDeathMessages = true;
     @TomlComment("Send advancement notifications to discord")
@@ -153,6 +162,14 @@ public class Config {
         public String onlineCountSingular = "1 player online";
         @TomlComment("Formatting to use for the online player count status if there is no player online, related to showPlayerCountStatus")
         public String onlineCountZero = "Server is lonely :(";
+
+        @TomlComment({"Format for shared waypoints",
+                        "Placeholders:",
+                        "%abbr%: abbreviation of waypoint (voxel defaults to first letter)",
+                        "%name%: name of waypoint",
+                        "%x%, %y%, %z%: coordinates",
+                        "%dimension%: dimension"})
+        public String waypointFormat = "Waypoint: (%abbr%)  %name% `%x% %y% %z%` in %dimension%";
     }
 
     public static class DiscordLinkResults {

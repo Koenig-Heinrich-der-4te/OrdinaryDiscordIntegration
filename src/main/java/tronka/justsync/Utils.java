@@ -13,6 +13,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -22,6 +23,11 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.World;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import tronka.justsync.chat.TextReplacer;
 import tronka.justsync.config.Config;
@@ -33,6 +39,19 @@ public class Utils {
     private static final Pattern URL_PATTERN = Pattern.compile(
         "https?://[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b[-a-zA-Z0-9()@:%_+.~#?&/=]*");
 
+    private static final Pattern SHARED_LOCATION_PATTERN =
+            Pattern.compile("^\\[x:(-?\\d+), y:(-?\\d+), z:(-?\\d+)]$");
+    private static final Pattern SHARED_WAYPOINT_PATTERN =
+            Pattern.compile("^\\[name:(\\w+), x:(-?\\d+), y:(-?\\d+), z:(-?\\d+), dim:minecraft:(?:\\w+_)?(\\w+)(?:, icon:\\w+)?\\]$");
+    private static final Map<RegistryKey<World>, String> DIMENSION_MAP =
+            Map.of(
+                World.OVERWORLD, "Overworld",
+                World.NETHER, "Nether",
+                World.END, "End"
+            );
+
+
+
     public static List<Role> parseRoleList(Guild guild, List<String> roleIds) {
         List<Role> roles = new ArrayList<>();
         if (roleIds == null) {
@@ -41,7 +60,8 @@ public class Utils {
         for (String roleId : roleIds) {
             Role role = guild.getRoleById(roleId);
             if (role == null) {
-                Optional<Role> namedRole = guild.getRoles().stream().filter(r -> r.getName().equals(roleId))
+                Optional<Role> namedRole = guild.getRoles().stream()
+                    .filter(r -> r.getName().equals(roleId))
                     .findFirst();
                 if (namedRole.isEmpty()) {
                     LOGGER.warn("Could not find role with id \"{}\"", roleId);
@@ -62,7 +82,8 @@ public class Utils {
     }
 
     public static String getPlayerName(UUID uuid) {
-        ProfileResult result = JustSyncApplication.getInstance().getServer().getSessionService()
+        ProfileResult result = JustSyncApplication.getInstance().getServer()
+            .getSessionService()
             .fetchProfile(uuid, false);
         if (result == null) {
             return "unknown";
@@ -87,7 +108,8 @@ public class Utils {
         connection.addRequestProperty("User-Agent", "DiscordJS");
         connection.addRequestProperty("Accept", "application/json");
         connection.connect();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream()));
         String data = reader.lines().collect(Collectors.joining());
         if (data.endsWith("\"ERR\"}")) {
             return null;
@@ -113,7 +135,9 @@ public class Utils {
         int lastEnd = 0;
         while (matcher.find()) {
             nodes.add(TextNode.of(text.substring(lastEnd, matcher.start())));
-            nodes.add(TextReplacer.create().replace("link", matcher.group()).applyNode(config.messages.linkFormat));
+            nodes.add(TextReplacer.create()
+                .replace("link", matcher.group())
+                .applyNode(config.messages.linkFormat));
             lastEnd = matcher.end();
         }
         nodes.add(TextNode.of(text.substring(lastEnd)));
@@ -125,5 +149,111 @@ public class Utils {
             return null;
         }
         return username.replaceAll("_", "\\_");
+    }
+
+    public static String formatVoxel(
+            String message, Config config, ServerPlayerEntity player) {
+        if (!message.startsWith("[x:") && !message.startsWith("[name:")) {
+            return message;
+        }
+
+        Matcher sharedLocationMatcher = SHARED_LOCATION_PATTERN.matcher(message);
+        if (sharedLocationMatcher.find()) {
+            return formatSharedLocationVoxel(sharedLocationMatcher, config, player);
+        }
+
+        Matcher sharedWaypointMatcher = SHARED_WAYPOINT_PATTERN.matcher(message);
+        if (sharedWaypointMatcher.find()) {
+            return formatSharedWaypointVoxel(sharedWaypointMatcher, config);
+        }
+
+        return message;
+    }
+
+    private static String formatSharedLocationVoxel(
+            Matcher matcher, Config config, ServerPlayerEntity player) {
+        String x = matcher.group(1);
+        String y = matcher.group(2);
+        String z = matcher.group(3);
+        String dim = DIMENSION_MAP.getOrDefault(
+                        player.getWorld().getRegistryKey(), "Unknown");
+
+        String returnMessage = config.messages.waypointFormat;
+        String name = "Shared Location";
+        if (dim.equals("Overworld") && !config.waypointURL.isEmpty()) {
+            name = String.format("[Shared Location](<%s>)", config.waypointURL);
+        }
+
+        return returnMessage.replace("%name%", name)
+                            .replace("%abbr%", "S")
+                            .replace("%dimension%", dim)
+                            .replaceAll("%x%", x)
+                            .replaceAll("%y%", y)
+                            .replaceAll("%z%", z);
+    }
+
+    private static String formatSharedWaypointVoxel(
+            Matcher matcher, Config config) {
+        String name = matcher.group(1);
+        String x = matcher.group(2);
+        String y = matcher.group(3);
+        String z = matcher.group(4);
+        String dim = StringUtils.capitalize(matcher.group(5));
+
+        String returnMessage = config.messages.waypointFormat;
+        if (dim.equals("Overworld") && !config.waypointURL.isEmpty()) {
+            name = String.format("[%s](<%s>)", name, config.waypointURL);
+        }
+
+        return returnMessage.replace("%name%", name)
+                            .replace("%dimension%", dim)
+                            .replace("%abbr%", name.substring(1, 2).toUpperCase())
+                            .replaceAll("%x%", x)
+                            .replaceAll("%y%", y)
+                            .replaceAll("%z%", z);
+    }
+
+    public static String formatXaero(String message, Config config) {
+        if (!message.startsWith("xaero-waypoint:")) {
+            return message;
+        }
+
+        List<String> messageParts = List.of(message.split(":"));
+        if (messageParts.size() != 10) {
+            return message;
+        }
+
+        int x, y, z;
+        try {
+            x = Integer.parseInt(messageParts.get(3));
+            y = parseIntWithDefault(messageParts.get(4), 64);
+            z = Integer.parseInt(messageParts.get(5));
+        } catch (NumberFormatException e) {
+            return message;
+        }
+
+        String dimension = messageParts.get(9).contains("overworld") ? "Overworld" :
+                           messageParts.get(9).contains("nether") ? "Nether" : "End";
+
+        String returnMessage = config.messages.waypointFormat;
+        String name = messageParts.get(1);
+        if (!config.waypointURL.isEmpty() && messageParts.get(9).contains("overworld")) {
+            name = String.format("[%s](<%s>)", name, config.waypointURL);
+        }
+
+        return returnMessage.replace("%name%", name)
+                            .replace("%abbr%", messageParts.get(2))
+                            .replaceAll("%x%", Integer.toString(x))
+                            .replaceAll("%y%", Integer.toString(y))
+                            .replaceAll("%z%", Integer.toString(z))
+                            .replace("%dimension%", dimension);
+    }
+
+    private static int parseIntWithDefault(String str, int defaultValue) {
+        try {
+            return Integer.parseInt(str);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }

@@ -4,3 +4,9 @@ build
 run
 out
 classes
+bin
+.classpath
+.factorypath
+.project
+.settings/
+

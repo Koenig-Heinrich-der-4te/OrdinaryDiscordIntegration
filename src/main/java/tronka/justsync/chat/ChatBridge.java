@@ -13,11 +13,8 @@ import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.advancement.AdvancementDisplay;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.network.message.MessageType;
-import net.minecraft.network.message.SignedMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -38,7 +35,6 @@ public class ChatBridge extends ListenerAdapter {
 
     public ChatBridge(JustSyncApplication integration) {
         this.integration = integration;
-        ServerMessageEvents.CHAT_MESSAGE.register(this::onMcChatMessage);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
         integration.registerConfigReloadHandler(this::onConfigLoaded);
         this.channel.sendMessage(integration.getConfig().messages.startMessage).queue();
@@ -189,9 +185,7 @@ public class ChatBridge extends ListenerAdapter {
     }
 
 
-    private void onMcChatMessage(SignedMessage signedMessage, ServerPlayerEntity player,
-        MessageType.Parameters parameters) {
-        String message = signedMessage.getContent().getString();
+    public void onMcChatMessage(String message, ServerPlayerEntity player) {
         if (this.integration.getConfig().waypoints.formatWaypoints) {
             message = Utils.formatXaero(message, this.integration.getConfig());
             message = Utils.formatVoxel(message, this.integration.getConfig(), player);
